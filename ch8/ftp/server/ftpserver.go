@@ -6,15 +6,17 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	//"os"
+	"os"
 	"path/filepath"
 	//"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 //working directory
 var wd string
+var mu sync.RWMutex
 
 func main() {
 
@@ -30,31 +32,41 @@ func main() {
 			log.Print(err)
 			continue
 		}
-		wd = "/home/skywalker/Documents/go/src/gopl"
+		wd = "/users/skywalker/go/src/github.com/gopl"
 		handleFTPCtrlConn(conn)
 	}
 
 	//data conn
 }
 
-func openDataConn(port string, dataConn *net.Conn) {
+func openDataConn(port string, dataListener *net.Listener, dataConn *net.Conn) {
 	fmt.Println("openDataConn called")
 	if port == "" {
 		port = "20"
 	}
 	addr := "localhost:" + port
 	//fmt.Println("attempting to listen on: " + addr)
-	listener, errListen := net.Listen("tcp", addr)
-	if errListen != nil {
-		log.Fatal(errListen)
+
+	var errListen error
+	var listener net.Listener
+	if *dataListener != nil {
+		listener = *dataListener
+	} else {
+
+		listener, errListen = net.Listen("tcp", addr)
+		if errListen != nil {
+			log.Fatal(errListen)
+		}
 	}
 
 	conn, err := listener.Accept()
 	if err != nil {
 		log.Print(err)
 	}
-
+	mu.Lock()
 	*dataConn = *(&conn)
+	*dataListener = *(&listener)
+	mu.Unlock()
 }
 
 func handleFTPDataConn(conn net.Conn) {
@@ -78,6 +90,7 @@ func handleFTPCtrlConn(conn net.Conn) {
 
 	var exit bool = false
 	var dataConn net.Conn
+	var dataListener net.Listener
 	for {
 		b := make([]byte, 1024)
 		conn.Read(b)
@@ -101,9 +114,19 @@ func handleFTPCtrlConn(conn net.Conn) {
 			resp = "230 Login Successful \r\n"
 		case "syst":
 			resp = "215 LINUX Ubuntu 16.04\r\n"
+		case "feat":
+			resp = "211 No extra features. Use PASV for ls.\r\n"
+		case "pwd":
+			resp = fmt.Sprintf("257 %s \r\n ", wd)
 		case "pasv":
 			resp = "227 Entering Passive Mode (127,0,0,1,0,20) \r\n"
-			go openDataConn("20", &dataConn)
+			mu.Lock()
+			fmt.Println(dataConn)
+			if dataConn != nil {
+				dataConn.Close()
+			}
+			go openDataConn("20", &dataListener, &dataConn)
+			mu.Unlock()
 			//PORT 127,0,0,1,148,80
 			/*argraw := strings.Split(raw[1], ",")
 			fmt.Println(argraw)
@@ -117,7 +140,7 @@ func handleFTPCtrlConn(conn net.Conn) {
 				resp = "200 Data connection open \r\n"
 			}*/
 			//resp = "200 Data connection open \r\n"
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(2000 * time.Millisecond)
 		case "list":
 			var dir string
 			var dataResp string
@@ -126,40 +149,48 @@ func handleFTPCtrlConn(conn net.Conn) {
 			} else {
 				dir = filepath.Join(wd, raw[1])
 			}
+			fmt.Fprint(conn, "150 Fetching file list \r\n")
+			files, err := ioutil.ReadDir(dir)
+			if err != nil {
+				dataResp = fmt.Sprintf("server: cmd %s : %v", "server", cmd, err)
+				break
+			}
+			for _, file := range files {
+				dataResp += file.Name()
+				dataResp += " "
+			}
+			dataResp += "\r\n"
+			mu.Lock()
 			if dataConn != nil {
-				fmt.Fprint(conn, "150 Fetching file list \r\n")
-				files, err := ioutil.ReadDir(dir)
-				if err != nil {
-					dataResp = fmt.Sprintf("server: cmd %s : %v", "server", cmd, err)
-					break
-				}
-				for _, file := range files {
-					dataResp += file.Name()
-					dataResp += " "
-				}
-				dataResp += "\r\n"
 				fmt.Fprint(dataConn, dataResp)
 				dataConn.Close()
 				resp = "226 Directory send ok \r\n"
+
 			} else {
 				resp = "500 Dataconn not established \r\n"
 			}
-			/*case "cd":
+			mu.Unlock()
+
+		case "cwd":
+			dir := filepath.Join(wd, raw[1]) //assuming incremental paths are given
 			file, err := os.Stat(dir)
 			if err != nil {
-				if !file.IsDir() {
-					resp = fmt.Sprintf("server error: %s is a file", fName)
-				}
+				resp = fmt.Sprintf("500 server error : %s\r\n", err)
 			}
 			if os.IsNotExist(err) {
-				resp = fmt.Sprintf("server error: no dir with name %s", fName)
+				resp = fmt.Sprintf("550 Dir %s doesn't exist \r\n", raw[1])
 			}
-			resp = fmt.Sprintf("success: current directory : %s", dir)*/
+			if !file.IsDir() {
+				resp = fmt.Sprintf("550 %s is a file. \r\n", raw[1])
+			}
+
+			wd = dir
+			resp = fmt.Sprintf("250 Working directory changed to %s \r\n", wd)
 		case "quit":
 			exit = true
 			resp = "221 Goodbye.\r\n"
 		default:
-			resp = fmt.Sprintf("%s: %s", cmd, "server: method not supported")
+			resp = "501 method not implmented \r\n"
 		}
 		if resp != "" {
 			fmt.Fprintf(conn, resp)
