@@ -1,0 +1,6 @@
+This text appeared once in second file.
+This text appeared twice in second file.
+This text appeared twice in second file.
+This text appeared thrice in second file.
+This text appeared thrice in second file.
+This text appeared thrice in second file.

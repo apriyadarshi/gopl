@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+<title>
+The Hindu: Breaking News, Elections News, Sports News, Live Updates
+</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="title" content="Breaking News, Elections News, Sports News, Live Updates"/>
+<link rel="shortcut icon" type="image/x-icon" href="http://www.thehindu.com/favicon.ico"/>
+<link rel="icon" type="image/ico" href="http://www.thehindu.com/favicon.ico"/>
+<link rel="apple-touch-icon" href="http://www.thehindu.com/apple-touch-icon.png"/>
+<link rel="apple-touch-icon-precomposed" href="http://www.thehindu.com/apple-touch-icon-precomposed.png"/>
+<meta name="msapplication-starturl" content="http://www.thehindu.com/"/>
+<meta name="msapplication-task"
+content="name=News; action-uri=http://www.thehindu.com/news/; icon-uri=http://www.thehindu.com/favicon.ico"/>
+<meta name="msapplication-task"
+content="name=Opinion; action-uri=http://www.thehindu.com/opinion/; icon-uri=http://www.thehindu.com/favicon.ico"/>
+<meta name="msapplication-task"
+content="name=Sport; action-uri=http://www.thehindu.com/sport/; icon-uri=http://www.thehindu.com/favicon.ico"/>
+<meta name="msapplication-task"
+content="name=Business; action-uri=http://www.thehindu.com/business/; icon-uri=http://www.thehindu.com/favicon.ico"/>
+<meta name="msapplication-task"
+content="name=Subscribe to RSS; action-uri=http://www.thehindu.com/?service=rss; icon-uri=http://www.thehindu.com/favicon.ico"/>
+<meta name="fragment" content="!">
+<meta name="description" content="Latest news, analysis, comment, in-depth coverage of politics, business, sport, environment, cinema and arts from India's national newspaper"/>
+<script>(function (w, d, u) {
+w.readyQ = [];
+w.bindReadyQ = [];
+function p(x, y) {
+if (x == "ready") {
+w.bindReadyQ.push(y);
+} else {
+w.readyQ.push(x);
+}
+};
+var a = {ready: p, bind: p};
+w.$ = w.jQuery = function (f) {
+if (f === d || f === u) {
+return a
+} else {
+p(f)
+}
+}
+})(window, document)
+</script>
+<script type="text/javascript">
+/* Front end properties configured in nursery */
+var FrontEndConfig = {"audioPlayer":"mediaelement","media.jwplayer.options.primary":"flash","media.jwplayer.ga.enabled":"true","media.jwplayer.hls.mimeTypes":"vnd.apple.mpegURL,application/x-mpegURL","videoPlayer":"flowplayer","media.jwplayer.sharing.enabled":"true","media.jwplayer.hls.enabled":"true"};
+if (typeof(FrontEndConfig) == 'undefined') {
+FrontEndConfig = {};
+}
+FrontEndConfig.rootURL = "http://www.thehindu.com/";
+/* Client-side device detection */
+var WFClientTypeDef = {"medium":"(min-width: 768px) and (max-width: 1023px)","xlarge":"(min-width: 1600px)","large":"(min-width: 1024px) and (max-width: 1599px)","small":"(max-width: 767px)"};
+var imageSizes = [80, 100, 115, 155, 170, 215, 230, 240, 300, 320, 355, 435, 460, 480, 615, 660, 730, 810, 960, 1080, 1140];
+var isMobile=false;
+var isTablet=false;
+var isDesktop=false;
+var isLargeDesktop=false;
+for ( var type in WFClientTypeDef) {
+if (window.matchMedia(WFClientTypeDef[type]).matches) {
+switch (type) {
+case "xlarge":
+isLargeDesktop=true; break;
+case "large":
+isDesktop=true;
+break;
+case "medium":
+isTablet=true; break;
+case "small":
+isMobile=true;
+break;
+}
+break;
+}
+}
+$(function(){
+$.each(FrontEndConfig, function(key, value) {
+/* Regular properties other than JW Player setup options
+are being processed here */
+if (key.indexOf('media.jwplayer.options') < 0) {
+FrontEndConfig[key] = WFUtils.parseStringToJSONObject(value);
+}
+});
+});
+</script>
+<meta property="fb:app_id" content="137450626398044"/>
+<meta property="og:site_name" content="The Hindu"/>
+<meta name="keywords" content=""/>
+<meta name="news_keywords" content=""/>
+<meta property="og:url" content="http://www.thehindu.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Breaking News, Elections News, Sports News, Live Updates" />
+<meta property="og:description" content="Latest news, analysis, comment, in-depth coverage of poli

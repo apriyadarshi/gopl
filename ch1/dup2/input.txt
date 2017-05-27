@@ -1,0 +1,6 @@
+This text appeared once.
+This text appeared twice.
+This text appeared twice.
+This text appeared thrice.
+This text appeared thrice.
+This text appeared thrice.
