@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -106,7 +107,7 @@ func handleFTPCtrlConn(conn net.Conn) {
 		cmd := raw[0]
 		//dir := filepath.Join(wd, fName)
 
-		var resp string
+		resp := ""
 		switch strings.ToLower(cmd) {
 		case "user":
 			resp = "331 Enter Password \r\n"
@@ -127,19 +128,6 @@ func handleFTPCtrlConn(conn net.Conn) {
 			}
 			go openDataConn("20", &dataListener, &dataConn)
 			mu.Unlock()
-			//PORT 127,0,0,1,148,80
-			/*argraw := strings.Split(raw[1], ",")
-			fmt.Println(argraw)
-			portLBits, _ := strconv.Atoi(argraw[5])
-			portHBits, _ := strconv.Atoi(argraw[4])
-			serverDTPport := portHBits*256 + portLBits
-
-			/*if err != nil {
-				resp = fmt.Sprintf("500 error opening data conn : %s\r\n", err)
-			} else {
-				resp = "200 Data connection open \r\n"
-			}*/
-			//resp = "200 Data connection open \r\n"
 			time.Sleep(2000 * time.Millisecond)
 		case "list":
 			var dir string
@@ -176,16 +164,49 @@ func handleFTPCtrlConn(conn net.Conn) {
 			file, err := os.Stat(dir)
 			if err != nil {
 				resp = fmt.Sprintf("500 server error : %s\r\n", err)
+				break
 			}
 			if os.IsNotExist(err) {
 				resp = fmt.Sprintf("550 Dir %s doesn't exist \r\n", raw[1])
+				break
 			}
 			if !file.IsDir() {
 				resp = fmt.Sprintf("550 %s is a file. \r\n", raw[1])
+				break
 			}
 
 			wd = dir
 			resp = fmt.Sprintf("250 Working directory changed to %s \r\n", wd)
+		case "retr":
+			fName := filepath.Join(wd, raw[1])
+			file, err := os.Stat(fName)
+			if err != nil {
+				resp = fmt.Sprintf("500 server error : %s\r\n", err)
+			}
+			if os.IsNotExist(err) {
+				resp = fmt.Sprintf("550 File %s doesn't exist \r\n", raw[1])
+				break
+			}
+			if file.IsDir() {
+				resp = fmt.Sprintf("550 %s is a directory. Can retrieve files only. \r\n", raw[1])
+				break
+			}
+			fmt.Fprintf(conn, "150 Fetching file. Transferring %s bytes ....\r\n", file.Size())
+			f, errOpen := os.Open(fName)
+			if errOpen != nil {
+				resp = fmt.Sprintf("550 open error: %s\r\n", err)
+			}
+			mu.RLock()
+			n, errCopy := io.Copy(dataConn, f)
+			if errCopy != nil {
+				resp = fmt.Sprintf("550 retr error: %s\r\n", err)
+				f.Close()
+			}
+			f.Close()
+			dataConn.Close()
+			mu.RUnlock()
+			fmt.Fprintf(conn, "226 File sent ok. %d bytes transferred. \r\n", n)
+			//type "200 A N \r\n"
 		case "quit":
 			exit = true
 			resp = "221 Goodbye.\r\n"
